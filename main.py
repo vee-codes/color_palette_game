@@ -1,6 +1,7 @@
 import random
 import sys
 from typing import List
+from collections import deque
 
 class ColorPalette:
     def __init__(self,num_rows:int,num_cols:int,moves:int,target_color:str,grid:List[List[str]]=None):
@@ -22,19 +23,34 @@ class ColorPalette:
             self.grid = [row.copy() for row in grid]
 
     def fill(self,x:int,y:int,new_color:str)->bool:
-        # check bounds and if the color is the same
-        if 0<=x<self.num_cols and 0<=y<self.num_rows and new_color!=grid[x][y]:
-            print(f"was {grid[x][y]} now {new_color}")
-            self.grid[x][y] = new_color
-            return True
-        else:
+        # check bounds 
+        if not (0<=x<self.num_cols and 0<=y<self.num_rows): 
+            return False
+        # get the color of the cell
+        original_color = self.grid[x][y]
+        # if the original color and the target color are the same, do nothing
+        if original_color == new_color:
             return False
 
-        # Fill the rest recursively(BFS) 
+        # Fill (BFS) 
+        queue = deque() 
+        queue.append((x,y)) # add the selected cell
         dirs = [(1,0),(-1,0),(0,1),(0,-1)]
-        for x1,x2 in dirs:
-            nx = x+x1
-            ny = y+y1
-            print(f"checking {nx},{ny}")
-            fill(nx,ny,new_color)
-        
+        while queue:
+            curr_x,curr_y = queue.popleft()
+
+            if self.grid[curr_x][curr_y] != original_color:
+                continue
+            
+            # change color
+            self.grid[curr_x][curr_y] = new_color
+            
+            # apply to adjacent cells
+            for dx,dy in dirs:
+                nx,ny = curr_x+dx,curr_y+dy
+                if (0<=nx<self.num_cols and
+                    0<=ny<self.num_rows and
+                    self.grid[nx][ny] == original_color):
+                    queue.append((nx,ny))
+
+        return True
