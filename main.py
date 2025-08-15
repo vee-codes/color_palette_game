@@ -10,7 +10,7 @@ class ColorPalette:
         self.num_cols = num_cols
         self.moves = moves
         self.target_color = target_color
-        colors = ['r','b','g','y']
+        self.colors = ['r','b','g','y']
         self.available_moves = self.moves
 
         if not grid:
@@ -18,12 +18,12 @@ class ColorPalette:
             print(self.grid)
             for r in range(num_rows):
                 for c in range(num_cols):
-                    self.grid[r][c] = colors[random.randrange(len(colors))]
+                    self.grid[r][c] = self.colors[random.randrange(len(self.colors))]
             print(self.grid)
         else:
             self.grid = [row.copy() for row in grid]
 
-    def fill(self,x:int,y:int,new_color:str)->bool:
+    def fill(self,new_color:str, x:int,y:int)->bool:
         """ Fills cell and adjacent cell with new_color"""
         # check bounds 
         if not (0<=x<self.num_cols and 0<=y<self.num_rows): 
@@ -54,37 +54,62 @@ class ColorPalette:
                     0<=ny<self.num_rows and
                     self.grid[nx][ny] == original_color):
                     queue.append((nx,ny))
+
+        # decrement the num of moves left if a valid fill operation
         self.available_moves -= 1
-        self.check_win()
         return True
     
     def check_win(self)->bool:
-        for r in self.grid:
-            for c in r:
-                if c != self.target_color:
-                    if self.available_moves == 0:
-                        print("You have lost, try again")
-                        input()
-                    else:
-                        self.display()
-        print("You have won!")
-        input()
-        return True
+        """Determines if the game has ended"""
+
+        # win condition
+        if all(cell == self.target_color for row in self.grid for cell in row):
+            print("You have won!")
+            return True
+        # no moves left
+        if self.available_moves == 0:
+            print("You have lost")
+            return True
+        # moves left
+        return False
 
     def display(self):
+        """ Displays the grid with game info"""
         print(f"Target Color: {self.target_color}\n"
               f"Moves Left: {self.available_moves}\n"
               f"Pick a color and position as follows `<color> <row> <col>` to change color\n")
         for row in self.grid:
             print(' '+' '.join(cell for cell in row))
-        user_input = input()
+        print()
 
-        args = user_input.replace(',',' ').split()
-        color = args[0]
-        x = int(args[1])
-        y = int(args[2]) 
-        print(f"Args: {color}, {x}, {y}")
-        self.fill(x,y,color)
+    def get_input(self):
+        """ Gets and validates user input"""
+        while True:
+            user_input = input()
+            args = user_input.replace(',',' ').split() # commas found
+            args = user_input.replace('  ',' ').split() # mutlie spaces found
+
+            # input validation
+            if len(args) != 3:
+                print("Invalid input, valid example:  `r 1 0`")
+                continue
+
+            color = args[0]
+            if color not in self.colors:
+                print(f"Invalid color, use any of {self.colors}")
+                continue
+             
+            x = int(args[1])
+            y = int(args[2]) 
+            return color,x,y
+    
+    def play(self):
+        """Main game loop"""
+        print("starting game")
+        while not self.check_win():
+            self.display()
+            color,x,y = self.get_input()
+            self.fill(color,x,y)
 
 if __name__ == '__main__':
 
@@ -94,4 +119,4 @@ if __name__ == '__main__':
              ['g','g','g','g']]
 
     game = ColorPalette(4,4,4,'r',grid1)
-    game.display()
+    game.play()
